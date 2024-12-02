@@ -1,8 +1,8 @@
 from sqlalchemy import exists, join
 from sqlalchemy.future import select
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
-from models.database import AsyncSession
+from models.database import AsyncSession, SessionLocal
 from models.models import User, Lottery, Ticket
 
 from logs.logging_config import logger
@@ -21,7 +21,7 @@ async def is_exists_user(telegram_id: int) -> bool:
         return result.scalar()  # Получение результата (True или False)
 
 
-async def get_user_by_id(telegram_id: int) -> User:
+async def get_user_by_telegram_id(telegram_id: int) -> User:
     """
     Возвращает пользователя по telegram_id
     :param telegram_id:
@@ -122,3 +122,85 @@ async def get_lottery_data(name):
             for row in data
         ]
         return result_data
+
+
+async def check_user_ticket(telegram_id: int, lottery_name: str):
+    """
+    Проверяет есть ли уже билет у пользователя в текущей лотерее
+    """
+    async with AsyncSession() as session:
+        query = (
+            select(Ticket)
+            .join(Ticket.lottery)
+            .join(Ticket.user)
+            .where(Lottery.name == lottery_name, User.telegram_id == telegram_id)
+        )
+        result = await session.execute(query)  # Выполнение запроса
+        ticket = result.scalars().first()
+        return ticket is not None
+
+
+async def get_lottery_by_name(lottery_name: str):
+    """
+    Возвращает объект лотереи по имени
+    """
+    async with AsyncSession() as session:
+        query_lottery = select(Lottery).filter(Lottery.name == lottery_name)
+        result_lottery = await session.execute(query_lottery)
+        lottery = result_lottery.scalar_one_or_none()
+        return lottery
+
+
+async def create_ticket(telegram_id: int, lottery_name: str):
+    """
+    Сохраняет и возвращает билет определенного пользователя в определенной лотереи
+    """
+    async with AsyncSession() as session:
+        lottery = await get_lottery_by_name(lottery_name=lottery_name)
+        user = await get_user_by_telegram_id(telegram_id=telegram_id)
+
+        query_ticket = select(Ticket).filter(Ticket.lottery_id == lottery.id).order_by(
+            Ticket.ticket_number.desc()).limit(1)
+        result_ticket = await session.execute(query_ticket)
+        max_ticket = result_ticket.scalar_one_or_none()
+
+        # Начинаем с 100, если нет билетов
+        next_ticket_number = 100 if not max_ticket else max_ticket.ticket_number + 1
+
+        # Создаём новый билет
+        new_ticket = Ticket(user_id=user.id, lottery_id=lottery.id, ticket_number=next_ticket_number)
+        session.add(new_ticket)
+        await session.commit()
+        await session.refresh(new_ticket)
+
+    return f"{next_ticket_number}"
+
+##############################################################################################
+# Этот подход возвращает только булево значение и может быть быстрее, если нет необходимости
+# загружать сам объект билета.
+#
+# async def check_user_ticket(session: AsyncSession, telegram_id: int, lottery_name: str) -> bool:
+#     query = (
+#         select(exists().where(
+#             Ticket.user.has(telegram_id=telegram_id),
+#             Ticket.lottery.has(name=lottery_name)
+#         ))
+#     )
+#     result = await session.execute(query)
+#     return result.scalar()
+##############################################################################################
+
+
+def create_lottery(session: SessionLocal, name: str, description: str = ''):
+    """
+    Создает объект лотереи
+    """
+    try:
+        lottery = Lottery(name=name, description=description)
+        session.add(lottery)
+        session.commit()
+        session.refresh(lottery)  # Обновление объекта для получения ID и других данных
+        return {"success": True, "lottery": lottery}
+    except IntegrityError:
+        session.rollback()  # Откат изменений в случае ошибки
+        return {"success": False, "error": "Лотерея с таким именем уже существует."}

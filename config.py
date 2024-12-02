@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     CHANNEL_ID_MIRAN: str
     CHANNEL_LINK_REG_BOT: str
 
+    LOTTERY_NAME: str
+
     DB_USER_PSQL: str
     DB_PASSWORD_PSQL: SecretStr
     DB_HOST_PSQL: str

@@ -37,3 +37,39 @@ def get_inline_keyboard_yes_no() -> InlineKeyboardMarkup:
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
+
+
+def get_inline_keyboard_check_user_state() -> InlineKeyboardMarkup:
+    buttons = [
+        [
+            InlineKeyboardButton(text="Проверка подписки",
+                                 callback_data="check_user_state"),
+        ]
+    ]
+
+    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return keyboard
+
+
+def get_inline_keyboard_get_number_of_ticket() -> InlineKeyboardMarkup:
+    buttons = [
+        [
+            InlineKeyboardButton(text="Получить номер",
+                                 callback_data="get_number_of_ticket"),
+        ]
+    ]
+
+    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return keyboard
+
+
+def get_inline_keyboard_link_to_bot_registration() -> InlineKeyboardMarkup:
+    buttons = [
+        [
+            InlineKeyboardButton(text="Регистрация в Telegram-MIRAN",
+                                 url="https://t.me/reg_user_miran_chat_bot"),
+        ]
+    ]
+
+    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return keyboard

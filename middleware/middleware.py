@@ -14,7 +14,8 @@ def check_subscribe(func):
         if status.status in ('member', 'creator', 'administrator'):
             await func(message)
         else:
-            await message.answer(f"""Вы не зарегистрированы!\n Для регистрации перейдите по ссылке: {settings.CHANNEL_LINK_REG_BOT}""")
+            await message.answer(f"""Вы не зарегистрированы!\n
+            Для регистрации перейдите по ссылке: {settings.CHANNEL_LINK_REG_BOT}""")
     return wrapper
 
 
