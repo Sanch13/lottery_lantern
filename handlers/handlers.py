@@ -39,8 +39,7 @@ class Registration(StatesGroup):
 async def cmd_start(message: Message):
     keyboard = get_inline_keyboard_check_user_state()
     await message.answer(
-        text=f"Рады приветствовать Вас на розыгрыше умного проектора\n"
-             f"Пожалуйста, проверьте вашу подписку на наш корпоративный Telegram-канал\n"
+        text=f"Пожалуйста, проверьте вашу подписку на наш корпоративный Telegram-канал\n"
              f'Для проверки нажмите кнопку "Проверка подписки"',
         reply_markup=keyboard
     )
@@ -115,29 +114,29 @@ async def process_choose_yes_or_no(callback_query: CallbackQuery, state: FSMCont
 @router.message(Registration.last_name)
 async def process_input_last_name(message: Message,  state: FSMContext):
     if not await validate_string(message):
-        await message.answer("только русские символы.")
+        await message.answer("только русские символы")
         return
 
     await state.update_data(last_name=message.text.strip())
     await state.set_state(Registration.first_name)
-    await message.answer("Введите ваше имя (только русские символы.):")
+    await message.answer("Введите ваше имя (только русские символы):")
 
 
 @router.message(Registration.first_name)
 async def process_input_first_name(message: Message,  state: FSMContext):
     if not await validate_string(message):
-        await message.answer("только русские буквы.")
+        await message.answer("только русские буквы")
         return
 
     await state.update_data(first_name=message.text.strip())
     await state.set_state(Registration.middle_name)
-    await message.answer("Введите ваше отчество (только русские символы.):")
+    await message.answer("Введите ваше отчество (только русские символы):")
 
 
 @router.message(Registration.middle_name)
 async def process_input_middle_name(message: Message,  state: FSMContext):
     if not await validate_string(message):
-        await message.answer("только русские буквы.")
+        await message.answer("только русские буквы")
         return
 
     await state.update_data(middle_name=message.text.strip())
