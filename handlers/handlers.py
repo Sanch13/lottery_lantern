@@ -18,7 +18,11 @@ from validators.validators import validate_string
 from utils.utils_for_db import (
     is_exists_user,
     check_user_ticket,
-    create_ticket, get_user_by_telegram_id, save_user
+    create_ticket,
+    get_user_by_telegram_id,
+    save_user,
+    get_lottery_by_name,
+    get_number_ticket_current_lottery
 )
 
 
@@ -169,12 +173,19 @@ async def process_get_number_of_ticket(callback_query: CallbackQuery, state: FSM
     )
     print(f"has_ticket------------------{has_ticket}------------------")
 
+    lottery = await get_lottery_by_name(lottery_name=settings.LOTTERY_NAME)
+    user = await get_user_by_telegram_id(telegram_id=telegram_id)
+
     if has_ticket:
-        await callback_query.message.answer("Вы уже участвуете в лотерее.")
+        ticket_number = await get_number_ticket_current_lottery(
+            lottery=lottery,
+            user=user,
+        )
+        await callback_query.message.answer(f"Вы уже участвуете в лотерее.\nВаш номер {ticket_number}")
     else:
         ticket_number = await create_ticket(
-            telegram_id=telegram_id,
-            lottery_name=settings.LOTTERY_NAME
+            lottery=lottery,
+            user=user,
         )
         await callback_query.message.answer(f"Ваш номер участия: {ticket_number}")
 
